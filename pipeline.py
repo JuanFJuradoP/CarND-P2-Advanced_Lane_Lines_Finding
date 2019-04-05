@@ -1,10 +1,21 @@
-#####################################################################################
+# ===================================================================================
 """
-Self-Driving Car Nanodegree Program
-Part 1: Computer Vision, Deep Learning and Sensor Fusion
-Project: Advanced Lane Finding Project
-Objective: Write a software pipeline to identify the lane boundaries in a video from
-a front-facing camera on a car.
+Code Information:
+	Developer: Juan Jurado - JJ.
+	Phone:  / +1 (513) 909 4704 / +57 (313) 247 4186.
+	Mail: juanjuradop@gmail.com / jj@kiwicampus.com.
+    LinkedIn: 
+
+Description: 
+    Self-Driving Car Nanodegree Program.
+    Part 1: Computer Vision, Deep Learning and Sensor Fusion.
+        Project # 2: Advanced Lane Finding Project.
+    Objective: Write a software pipeline to identify the lane boundaries in a video from a front-facing camera on a car.
+
+Tested on: 
+    python 2.7.
+    OpenCV 3.0.0.
+    Ubuntu 16.04.
 
 The goals / steps of this project are the following:
 
@@ -18,39 +29,85 @@ chessboard images. OK
 7. Warp the detected lane boundaries back onto the original image.OK
 8. Output visual display of the lane boundaries and numerical estimation of lane 
 curvature and vehicle position.OK
-
-Author: JJ from Kiwicampus.com
 """
-#####################################################################################
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
+# ===================================================================================
+# IMPORT USEFUL PACKAGES.
+# ===================================================================================
+# Importing useful packages.
 import matplotlib.image as mpimg
-import glob
+import matplotlib.pyplot as plt
+import numpy as np
 import warnings
+import glob
+import cv2
 import os
-#####################################################################################
 
-# Making sure we import our images with the right names
-test_img_dir = "test_images/"
-
-# prepare object points
-nx = 9 # Number of inside corners in x
-ny = 6 # Number of inside corners in y
-
-#Se crea un array con el nombre de todas las imagenes que están en la carpeta test_images
-test_images_names = os.listdir(test_img_dir)
-test_images_names = list(map(lambda name: test_img_dir + name, test_images_names))
-
+# ===================================================================================
+# DEFINE CLASSES.
+# ===================================================================================
+# Define a class to create warnings.
 class images_warning(UserWarning):
     pass
 
+# Define a class to receive the characteristics of each line detection.
+class Line():
+    def __init__(self):
+        # was the line detected in the last iteration?.
+        self.detected = False
+        # x values of the last n fits of the line.
+        self.recent_xfitted = []
+        #average x values of the fitted line over the last n iterations.
+        self.bestx = None
+        #polynomial coefficients averaged over the last n iterations.
+        self.best_fit = None
+        #polynomial coefficients for the most recent fit.
+        self.current_fit = [np.array([False])]
+        #radius of curvature of the line in some units.
+        self.radius_of_curvature = None
+        #distance in meters of vehicle center from the line.
+        self.line_base_pos = None
+        #difference in fit coefficients between last and new fits.
+        self.diffs = np.array([0,0,0], dtype='float') 
+        #x values for detected line pixels.
+        self.allx = None
+        #y values for detected line pixels.
+        self.ally = None
+
+# ===================================================================================
+# GLOBAL VARIABLES.
+# ===================================================================================
+# Prepare object points.
+nx = 9 # Number of inside corners in x.
+ny = 6 # Number of inside corners in y.
+
+# ===================================================================================
+# READING TEST IMAGES NAMES.
+# ===================================================================================
+# In the folder 'test_images' there is the images to test the pipeline first,
+# once we have done the pipeline test using images, we could jump to test the videos.
+# Making sure we import our images with the right names.
+
+test_img_dir = "test_images/"
+
+# I create an array with the names of all images that are inside this folder.
+test_images_names = os.listdir(test_img_dir)
+test_images_names = list(map(lambda name: test_img_dir + name, test_images_names))
+
+# ===================================================================================
+# FUNCTIONS.
+# ===================================================================================
+
 def read_images(names):
-    ### FUNCTION: Function to read images according to name list - read_images()
-    ### Funcion that reads the name according to the root and append in a new list
-    ### inputs: Images root names (names)
-    ### outputs: list with images according to root folder location (images)
-    ### Resources: N/A
+    # Description:
+    #   Function to read images according to name list - read_images().
+    #   Function that reads the name according to the root and append in a new list.
+    # Inputs: 
+    #   Images root names (names).
+    # Outputs: 
+    #   List with images according to root folder location (images).
+    # Resources:
+    #   N/A.
+
     images = []
     for i in range(len(names)):
         temp = cv2.imread(names[i])
@@ -58,73 +115,83 @@ def read_images(names):
     return images
 
 def camera_calibration (calibration_images_names, nx, ny):
-    ### FUNCTION: Function to camera calibration - camera_calibration()
-    ### Calibrate the camera according to chessboard images, returns the mtx matrix,
-    ### dist and images list with points drawn
-    ### inputs: calibration images list (calibration_images_names), cheesboard X corners (nx) and Y corners (ny) 
-    ### outputs: Camera matrix (mtx) ,distortion coefficientes (dist), images with chessboard corners (drawChessboardCornersImages)
-    ### Resources: https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+    # Description:
+    #   Function to camera calibration - camera_calibration().
+    #   Calibrate the camera according to chessboard images, returns the mtx matrix,dist and images list with points drawn.
+    # Inputs: 
+    #   Calibration images list (calibration_images_names), cheesboard X corners (nx) and Y corners (ny).
+    # Outputs: 
+    #   Camera matrix (mtx) ,distortion coefficientes (dist), images with chessboard corners (drawChessboardCornersImages).
+    # Resources:
+    #   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
-    # List to save Images with draw chessboard corners
+    # List to store Images with draw chessboard corners.
     drawChessboardCornersImages = []
-    # Arrays to store object points and image points from all the images
-    objpoints = [] # 3D points in real world space
-    # Los puntos tienen coordenadas en x,y,z. la coordenada z será 0 para todos los puntos
-    imgpoints = [] # 2D points in image plane
-    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0), ... , (7,5,0)
+    # List to store object points and image points from all the images.
+    objpoints = [] # 3D points in real world space.
+    # All the points has x,y,z coordinates. The z coordinate will be 0 for all the points.
+    imgpoints = [] # 2D points in image plane.
+    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0), ... , (7,5,0).
     objp = np.zeros((nx*ny,3), np.float32)
-    objp[:,:2] = np.mgrid[0:nx,0:ny].T.reshape(-1,2) # x, y coordinates
+    objp[:,:2] = np.mgrid[0:nx,0:ny].T.reshape(-1,2) # x, y coordinates.
 
     for fname in calibration_images_names:
-        # Read in a calibration image
+        # Read in a calibration image.
         img = cv2.imread(fname)
-        # Convert to grayscale
+        # Convert to grayscale.
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # Find the chessboard corners
+        # Find the chessboard corners.
         ret, corners = cv2.findChessboardCorners(gray, (nx, ny), None)
-        # If corners are found, add object points , image points
+        # If corners are found, add object points , image points.
         if ret == True:
             objpoints.append(objp)
             imgpoints.append(corners)
 
-            # Draw and display the corners
+            # Draw and display the corners.
             img = cv2.drawChessboardCorners(img,(nx,ny),corners,ret)
+            
             #plt.imshow(img)
             #plt.show()
-            #Append each image with chessboard corners
+
+            #Append each image with chessboard corners.
             drawChessboardCornersImages.append(cv2.drawChessboardCorners(img,(nx,ny),corners,ret))
     # Camera calibration, given object points, image points, and the shape of the grayscale image:
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     return mtx, dist, drawChessboardCornersImages
 
 def check_calibration_process (drawChessboardCornersImages,calibration_images_names):
-    ### FUNCTION: Verify images to calibrate - check_calibration_process()
-    ### This function verifies that images for calibration works according to borders on it
-    ### it means, if we send 20 images (patterns) and just work 17, send a warning that only
-    ### 17 patterns images calibration work for camera calibration
-    ### inputs: chessboards images with points list
-    ### outputs: Nothing, just send a warning through console
-    ### Resources: https://docs.python.org/3/library/warnings.html
+    # Description:
+    #   Verify images to calibrate - check_calibration_process().
+    #   This function verifies that images for calibration works according to borders on it.
+    #   It means, if we send 20 images (patterns) and just work 17, send a warning that only
+    #   17 patterns images calibration work for camera calibration.
+    # Inputs:
+    #   Chessboards images with points list.
+    # Outputs:
+    #   Nothing, just send a warning through console.
+    # Resources:
+    #   https://docs.python.org/3/library/warnings.html
+
     if len(drawChessboardCornersImages)!=len(calibration_images_names):
         print('You are using',len(drawChessboardCornersImages), 'of', len(calibration_images_names), 'images to calibrate your camera.' )
         warnings.warn('Not all images were used to calibrate your camera.',images_warning)
     return
 
 def undistor_image (image, mtx, dist):
-    ### FUNCTION: Undistored images - undistor_image()
-    ### Funcion que modifica la imagen de acuerdo a los parametros de la camara para convertir
-    ### una imagen con distorsion en una imagen sin distorsion
-    ### inputs: distored image (image), Camera matrix (mtx) ,distortion coefficientes (dist)
-    ### outputs: undistored image (img)
-    ### Resources: 
+    # Description:
+    #   Undistored images - undistor_image().
+    #   Function that modify the iamge according to camera distorsion parameters.
+    # Inputs: 
+    #   distored image (image), Camera matrix (mtx), distortion coefficientes (dist).
+    # Outputs: 
+    #   undistored image (img).
+    # Resources:
+    #   N/A.
+
     img = cv2.undistort(image, mtx, dist, None, mtx)
     return img
 
 def abs_sobel_thresh(img, orient='x', thresh_min=0, thresh_max=255):
-    ### FUNCTION: Sobel function - abs_sobel_thresh()
-    ### inputs:
-    ### outputs: 
-    ### Resources: 
     # Apply the following steps to img
     # 1) Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -190,16 +257,60 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     # Return the binary image
     return binary_output
 
+
+
+"""
+def save_images_output (src_path, images, image_desc, dst_path='None'):
+    # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
+    # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
+    # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
+    
+    imgs_names = os.listdir(src_path) 
+    for idx, img in enumerate(images):
+        cv2.imwrite(os.path.join(dst_path, "{}_{}".format(image_desc[idx], imgs_names[idx])), img) 
+
+"""
+
+
+"""
+def save_images_output (direction_original, image, image_description):
+    # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
+    # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
+    # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
+    image_name = []
+    image_new = []
+    image_names = os.listdir(direction_original)
+    directory_output = '/home/juan/Desktop/Self_Driving_cars_nanodegree/Projects/CarND-P2-Advanced_Lane_Lines_Finding/output_images/'
+    for i in range(len(image_names)):
+        image_name.append(directory_output + image_description + image_names[i])
+        print(image_name[i])
+        if len(image[i].shape) < 4:
+            image[i] = cv2.cvtColor(image[i], cv2.COLOR_GRAY2RGB)
+        cv2.imwrite(image_name[i], image[i])
+        #cv2.imshow("nalgas",image[i]);cv2.waitKey(0)
+        #cv2.imwrite(image[i])
+    return
+
+binary_image.dtype='uint8'
+>>> cv2.imwrite('image.png', binary_image)
+"""
+
+
 def save_images_output (direction_original, image, image_description):
     # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
     # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
     # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
     image_name = []
     image_names = os.listdir(direction_original)
-    directory_output = '/home/juan/Desktop/Self_Driving_cars_nanodegree/Projects/CarND-Advanced-Lane-Lines/output_images/'
+    directory_output = '/home/juan/Desktop/Self_Driving_cars_nanodegree/Projects/CarND-P2-Advanced_Lane_Lines_Finding/output_images/'
     for i in range(len(image_names)):
         image_name.append(directory_output + image_description + image_names[i])
+        #image[i].dtype='uint32'
+        #image[i] = cv2.cvtColor(image[i], cv2.COLOR_GRAY2RGB)
+        #image[i].astype('uint8') * 255
+        #cv2.imshow("nalgas",image[i]);cv2.waitKey(0)
         cv2.imwrite(image_name[i], image[i])
+
         #cv2.imwrite(image[i])
     return
 
@@ -464,16 +575,34 @@ for i in range(len(binary_images)):
     binary_warped, M = perspective_images (binary_images[i], mtx, dist, nx, ny)
     binary_warped_images.append(binary_warped)
 
-out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped_images[0])
-left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+def text_in_image (images_list,binary_warped_images):
+    new_images = []
+    for i in range(len(images_list)):
+        out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped_images[i])
+        left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+        text_list = []
+        text_list.append(str(left_curvature))
+        text_list.append(str(right_curvature))
+        text_list.append(center)
+
+        image_temp = print_list_text(images_list[i],text_list, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+        
+        new_images.append(image_temp)
+        #cv2.imshow("img",new_images[i]);cv2.waitKey(0)
+    return new_images
+
+images_with_text = text_in_image (test_images_undistored_copy,binary_warped_images)
 
 save_images_output (test_img_dir, calibration_images_distored, "Calibration_images_distored_")
 save_images_output (test_img_dir, test_images_distored, "test_images_distored_")
 save_images_output (test_img_dir, test_images_undistored, "test_images_undistored_")
 save_images_output (test_img_dir, camera_cal_undistored, "camera_cal_undistored_")
-save_images_output (test_img_dir, binary_images, "binary_images_")
-save_images_output (test_img_dir, binary_warped_images, "binary_warped_images_")
+save_images_output (test_img_dir, images_with_text, "images_with_text")
+#save_images_output (test_img_dir, binary_images, "binary_images_")
+#save_images_output (test_img_dir, binary_warped_images, "binary_warped_images_")
 
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
 
 def process_video (frame, mtx, dist, nx, ny):
     original_frame = np.copy(frame)
@@ -505,84 +634,22 @@ def process_video (frame, mtx, dist, nx, ny):
     original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
     return original_frame_text, out_img
 
-
-
-
-text_list = []
-#print(left_curvature)
-#print(right_curvature)
-#print(center)
-
-text_list.append(str(left_curvature))
-text_list.append(str(right_curvature))
-text_list.append(center)
-
-test_images_undistored_copy[0] = print_list_text(test_images_undistored_copy[0],text_list, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-
-
-#cv2.imshow('image',test_images_undistored_copy[0])
-
-#plt.imshow(binary_warped_images[0],'gray')
-#cv2.show()
-
 """
+# Uncomment to run the video pipeline.
 # Read the video
 cap = cv2.VideoCapture('project_video.mp4')
-
 while(cap.isOpened()):
     ret, frame = cap.read()
-    frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
-    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('frame',frame_original_text)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-cap.release()
-cv2.destroyAllWindows()
+    if ret==True:
+        frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
+        out.write(frame)
+        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #cv2.imshow('frame',frame_original_text)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 """
+
+cap.release()
+out.release()
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
-
-"""
-white_output = 'test_videos_output/solidWhiteRight.mp4'
-## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
-## To do so add .subclip(start_second,end_second) to the end of the line below
-## Where start_second and end_second are integer values representing the start and end of the subclip
-## You may also uncomment the following line for a subclip of the first 5 seconds
-##clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4").subclip(0,5)
-clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
-white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
-%time white_clip.write_videofile(white_output, audio=False)
-
-"""
-
-
-"""
-ES UNA FUNCION PARA IMPRIMIR
-    if show == True:
-        f, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20,10))
-        ax1.set_title('Actual image')
-        ax1.imshow(img)
-        ax2.set_title('Combined gradx,grady,magnitude,direction')
-        ax2.imshow(combined, cmap='gray')
-        ax3.set_title('Color thresholding')
-        ax3.imshow(s_binary, cmap='gray')
-        ax4.set_title('Combined all')
-        ax4.imshow(combined_binary, cmap='gray')
-"""
-
-"""
-Insights:
-- Hacer una funcion que lea las imagenes de una carpeta dada
-- Imprimir dos listas de imagenes por columnas, que se pueda evidenciar el antes y el despues
-"""
-###########################################################################
-################### COSAS PARA MEJORAR EL CODIGO - Kiwi ###################
-"""
-1. En el proceso de calibracion hacer algo usando opencv para saber donde esta fisicamente la camara
-y poder ajustar los valores mecanicos de roll, pitch y yaw para que la camara esté bien centrada
-RESOURCES: https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#void%20Rodrigues(InputArray%20src,%20OutputArray%20dst,%20OutputArray%20jacobian)
-https://www.youtube.com/watch?v=O72BKIGLpnQ
-https://github.com/npinto/opencv/blob/master/samples/python2/plane_ar.py
-Look this: Rodrigues, calibrateCamera, stereoCalibrate, solvePnP
-"""
