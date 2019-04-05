@@ -601,9 +601,6 @@ save_images_output (test_img_dir, images_with_text, "images_with_text")
 #save_images_output (test_img_dir, binary_images, "binary_images_")
 #save_images_output (test_img_dir, binary_warped_images, "binary_warped_images_")
 
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
-
 def process_video (frame, mtx, dist, nx, ny):
     original_frame = np.copy(frame)
     frame_undistort = cv2.undistort(frame, mtx, dist, None, mtx)
@@ -634,22 +631,23 @@ def process_video (frame, mtx, dist, nx, ny):
     original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
     return original_frame_text, out_img
 
-"""
+
 # Uncomment to run the video pipeline.
+
+#fourcc = cv2.VideoWriter_fourcc(*'XVID')
+#out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
 # Read the video
 cap = cv2.VideoCapture('project_video.mp4')
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret==True:
         frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
-        out.write(frame)
+        #out.write(frame)
         #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #cv2.imshow('frame',frame_original_text)
+        cv2.imshow('frame',frame_original_text)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-"""
 
-cap.release()
 out.release()
 cv2.waitKey(0)
-cv2.destroyAllWindows()
+cv2.destroyAllWindows() 
