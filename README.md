@@ -1,6 +1,68 @@
-## Advanced Lane Finding
+# **CarND-P2 - Advanced Lane Finding**
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+
+Una de las caracteristicas mas importantes para carros autonomos es la deteccion de lineas eficientemente en las autopistas. Los metodos de vision por computador son usados con gran frecuencia. Este proyecto muestra una deteccion de lineas usando algoritmos de vision por computador de manera mas robusta.
+(Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nano degree program).
+
 ![Lanes Image](./examples/example_output.jpg)
+
+## **Getting Started**
+
+Las siguientes instrucciones son usadas para correr el proyecto y obtener los resultados propuestos en los requerimientos que se mencionan en el documento. These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+
+El proyecto tiene un unico script en python llamado tal.
+
+Cuando se ejecute el script en python se obtendra el video resultante con el proceso episodio a episodio con los datos mostrados en pantalla.
+
+### **Prerequisites**
+
+Para ejecutar el algoritmo de deteccion avanzada de lineas se debe tener los siguiente requisitos que de acuerdo al sistema operativo deben ser instalados.
+```
+Python 2.7.
+OpenCV 3.0.0.
+Ubuntu 16.04 (Recomendado)
+```
+
+## **Running the code**
+
+Una vez se haya instalado los prerequisitos se debera hacer una clonacion del repositorio en Github. 
+
+```
+git clone  LARALALALA
+```
+Luego de tener descargado el repositorio, ejecutar el script en python.
+
+```
+python pipeline.py
+```
+
+## **Goals**
+
+Los objetivos de este proyecto son los siguientes:
+
+* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
+* Apply a distortion correction to raw images.
+* Use color transforms, gradients, etc., to create a thresholded binary image.
+* Apply a perspective transform to rectify binary image ("birds-eye view").
+* Detect lane pixels and fit to find the lane boundary.
+* Determine the curvature of the lane and vehicle position with respect to center.
+* Warp the detected lane boundaries back onto the original image.
+* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+
+## **Authors**
+
+* **Juan Francisco Jurado Paez**
+* Phone: +1 513 909 4704 / +57 313 247 4186.
+* Mail: juanjuradop@gmail.com - jj@kiwicampus.com 
+* LinkedIn: https://www.linkedin.com/in/juanfjuradop/
+
+## **License**
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+
+
 
 In this project, your goal is to write a software pipeline to identify the lane boundaries in a video, but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
 
