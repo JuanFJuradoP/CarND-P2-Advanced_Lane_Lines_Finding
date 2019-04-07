@@ -1,10 +1,10 @@
-## Writeup Template
+# **CarND-P2 - Advanced Lane Finding**
+[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+One of the most important characteristics for autonomous cars is the efficient detection of lines on highways. Computer vision methodsare used with high frequency. This project shows a line detection using computer vision algorithms robustly. (Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nano degree program).
 
----
+![Lanes Image](./examples/example_output.jpg)
 
-**Advanced Lane Finding Project**
 
 The goals / steps of this project are the following:
 
@@ -16,6 +16,33 @@ The goals / steps of this project are the following:
 * Determine the curvature of the lane and vehicle position with respect to center.
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+---
+
+[//]: # (Image References)
+
+[image1]: ./output_images/Calibration_images_distored_straight_lines1.jpg "Undistorted"
+[image2]: ./test_images/test1.jpg "Road Transformed"
+[image3]: ./examples/binary_combo_example.jpg "Binary Example"
+[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image6]: ./examples/example_output.jpg "Output"
+[video1]: ./project_video.mp4 "Video"
+
+## **CarND-P2 - Advanced Lane Finding**
+
+
+
+
+
+HOLAAAAA
+![alt text][image1]
+
+![width=100][image1]
+
+<img src="./output_images/Calibration_images_distored_straight_lines1.jpg" alt="drawing" width="350"/> 
+
+
+---
 
 [//]: # (Image References)
 
@@ -27,9 +54,11 @@ The goals / steps of this project are the following:
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
-## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
+## **CarND-P2 - Advanced Lane Finding**
 
-### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+	:bear:
+    @octocat :+1: This PR looks great - it's ready to merge! :shipit:
+:EMOJICODE:.
 
 ---
 
@@ -125,3 +154,72 @@ Here's a [link to my video result](./project_video.mp4)
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+
+
+
+# **CarND-P2 - Advanced Lane Finding**
+[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+
+One of the most important characteristics for autonomous cars is the efficient detection of lines on highways. Computer vision methodsare used with high frequency. This project shows a line detection using computer vision algorithms robustly. (Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nano degree program).
+
+![Lanes Image](./examples/example_output.jpg)
+
+## **Getting Started**
+
+The following instructions are used to run the project and obtain the results proposed in the requirements mentioned in the document. These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+This project has just one script on python called pipeline.py
+
+When the script is executed in python, the resulting video will be obtained with the frame-by-frame process with the data shown on the screen.
+
+### **Prerequisites**
+
+To execute the advanced line detection algorithm, you must have the following requirements that, according to the operating system, must be installed.
+```
+Python 2.7.
+OpenCV 3.0.0.
+Ubuntu 16.04 (Recomendado)
+```
+
+## **Running the code**
+
+Once the prerequisites have been installed, a cloning of the repository should be done in Github.
+
+```
+git clone  https://github.com/JuanFJuradoP/CarND-P2-Advanced_Lane_Lines_Finding.git
+```
+Once the the repository have been cloned, it is time to execute the script in python.
+
+```
+python pipeline.py
+```
+
+## **Goals**
+
+The main objectives of this projects are described below.
+
+* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
+* Apply a distortion correction to raw images.
+* Use color transforms, gradients, etc., to create a thresholded binary image.
+* Apply a perspective transform to rectify binary image ("birds-eye view").
+* Detect lane pixels and fit to find the lane boundary.
+* Determine the curvature of the lane and vehicle position with respect to center.
+* Warp the detected lane boundaries back onto the original image.
+* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+
+
+## **Content**
+The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  
+
+The output images are stored in the folder called `output_images`. The video called `output.avi` is the final video.  
+
+## **Authors**
+
+* **Juan Francisco Jurado Paez**
+* Phone: +1 513 909 4704 / +57 313 247 4186.
+* Mail: juanjuradop@gmail.com - jj@kiwicampus.com 
+* LinkedIn: https://www.linkedin.com/in/juanfjuradop/
+
+## **License**
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details          
