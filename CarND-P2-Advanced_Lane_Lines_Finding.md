@@ -1,87 +1,10 @@
 # **CarND-P2 - Advanced Lane Finding**
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-Una de las caracteristicas mas importantes para carros autonomos es la deteccion de lineas eficientemente en las autopistas. Los metodos de vision por computador son usados con gran frecuencia. Este proyecto muestra una deteccion de lineas usando algoritmos de vision por computador de manera mas robusta.
-(Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nano degree program).
+One of the most important characteristics for autonomous cars is the efficient detection of lines on highways. Computer vision methodsare used with high frequency. This project shows a line detection using computer vision algorithms robustly. (Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nano degree program).
 
 ![Lanes Image](./examples/example_output.jpg)
 
-## **Getting Started**
-
-Las siguientes instrucciones son usadas para correr el proyecto y obtener los resultados propuestos en los requerimientos que se mencionan en el documento. These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-
-El proyecto tiene un unico script en python llamado tal.
-
-Cuando se ejecute el script en python se obtendra el video resultante con el proceso episodio a episodio con los datos mostrados en pantalla.
-
-### **Prerequisites**
-
-Para ejecutar el algoritmo de deteccion avanzada de lineas se debe tener los siguiente requisitos que de acuerdo al sistema operativo deben ser instalados.
-```
-Python 2.7.
-OpenCV 3.0.0.
-Ubuntu 16.04 (Recomendado)
-```
-
-## **Running the code**
-
-Una vez se haya instalado los prerequisitos se debera hacer una clonacion del repositorio en Github. 
-
-```
-git clone  LARALALALA
-```
-Luego de tener descargado el repositorio, ejecutar el script en python.
-
-```
-python pipeline.py
-```
-
-## **Goals**
-
-Los objetivos de este proyecto son los siguientes:
-
-* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
-* Apply a distortion correction to raw images.
-* Use color transforms, gradients, etc., to create a thresholded binary image.
-* Apply a perspective transform to rectify binary image ("birds-eye view").
-* Detect lane pixels and fit to find the lane boundary.
-* Determine the curvature of the lane and vehicle position with respect to center.
-* Warp the detected lane boundaries back onto the original image.
-* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
-
-## **Authors**
-
-* **Juan Francisco Jurado Paez**
-* Phone: +1 513 909 4704 / +57 313 247 4186.
-* Mail: juanjuradop@gmail.com - jj@kiwicampus.com 
-* LinkedIn: https://www.linkedin.com/in/juanfjuradop/
-
-## **License**
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-
-
-
-In this project, your goal is to write a software pipeline to identify the lane boundaries in a video, but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-
-
-
-
-
-
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
 
 The goals / steps of this project are the following:
 
@@ -93,15 +16,81 @@ The goals / steps of this project are the following:
 * Determine the curvature of the lane and vehicle position with respect to center.
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+---
 
-The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  If you want to extract more test images from the videos, you can simply use an image writing method like `cv2.imwrite()`, i.e., you can read the video in frame by frame as usual, and for frames you want to save for later you can write to an image file.  
+[//]: # (Image References)
 
-To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `output_images`, and include a description in your writeup for the project of what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+[image1]: ./output_images/Readme_images/1.png "Calibration Cameras 1"
 
-The `challenge_video.mp4` video is an extra (and optional) challenge for you if you want to test your pipeline under somewhat trickier conditions.  The `harder_challenge.mp4` video is another optional challenge and is brutal!
+[image2]: ./output_images/Readme_images/2.png "Thresholded binary image 1"
+[image3]: ./output_images/Readme_images/3.png "Thresholded binary image 2"
+[image4]: ./output_images/Readme_images/4.png "Thresholded binary image 3"
+[image5]: ./output_images/Readme_images/5.png "Thresholded binary image 4"
+[image6]: ./output_images/Readme_images/6.png "Thresholded binary image 5"
+[image7]: ./output_images/Readme_images/7.png "Thresholded binary image 6"
+[image8]: ./output_images/Readme_images/8.png "Thresholded binary image 7"
+[image9]: ./output_images/Readme_images/9.png "Thresholded binary image 8"
+[image10]: ./output_images/Readme_images/10.png "Polynomial Fitting 1"
+[image11]: ./output_images/Readme_images/11.png "Polynomial Fitting 2"
+[image12]: ./output_images/Readme_images/12.png "Polynomial Fitting 3"
+[image13]: ./output_images/Readme_images/13.png "Road area detection 1"
+[image14]: ./output_images/Readme_images/14.png "Road area detection 2"
+[image15]: ./output_images/Readme_images/15.png "Road area detection 3"
+[image16]: ./output_images/Readme_images/16.png "Road area detection 4"
 
-If you're feeling ambitious (again, totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!
+## **Pipeline description**
+### **1. Camera Calibration**
+Camera calibration is the process of estimating intrinsic and/or extrinsic parameters. Intrinsic parameters deal with the camera's internal characteristics, such as, its focal length, skew, distortion, and image center. Extrinsic parameters describe its position and orientation in the world. Knowing intrinsic parameters is an essential first step for 3D computer vision, as it allows you to estimate the scene's structure in Euclidean space and removes lens distortion, which degrades accuracy. 
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+Two functions are important to camera calibration. The first one is `camera_calibration()`. This function is in charge calibrate the camera according to chessboard images, returns the mtx matrix,dist and images list with points drawn. It is supossed that the image is in the plane (x,y), thus z=0.
 
+On the other hand, I used `check_calibration_process()` function to verify and count how many images were used to calibrate the camera. Because, some images does not have the minimum amount of black squares to calibrate the camera. So, this function verify and report how many images were useful.
+
+Find below an example of an image to show both images. Left image is a distored pattern and the right one is the undistored image (after camera calibration process).
+
+![image1]
+*Figure 1 - Distored and undistored image.*
+
+### **2. Thresholded binary image.**
+
+Para encontrar una imagen binaria se uso el operador Sobel para las imagenes usando la funcion `abs_sobel_thresh()`. La funcion convierte la imagen RGB en escala de grises usando la funcion `cv2.cvtColor()`. Luego, se obtiene la derivada en 'x' y 'y' respectivamente para tomar el valor absoluto de la derivada en 'x' y 'y' aplicando la funcion ` cv2.Sobel()`. 
+Luego se aplico mascaras de color para determinar el punto en donde se veia las lineas blancas y amarillas usando `binary_output[scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 1`.
+
+Para tener una deteccion de lineas mas robusta se calcula la magnitud del gradiente de la imagen usando la funcion `mag_thresh()` siguiendo el siguiente pipeline. Primero se debe obtener una imagen en un solo canal, en este caso, escala de grises. Luego, se calcula los gradientes en 'X' y 'Y' por separado usando `sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)` y `sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)` respectivamente.
+
+A continuacion se muestra algunas imagenes con el resultado obtenido.
+![image2]
+*Figure 2 - Thresholded binary image.*
+![image3]
+*Figure 3 - Thresholded binary image.*
+![image4]
+*Figure 4 - Thresholded binary image.*
+![image5]
+*Figure 5 - Thresholded binary image.*
+![image6]
+*Figure 6 - Thresholded binary image.*
+![image7]
+*Figure 7 - Thresholded binary image.*
+![image8]
+*Figure 8 - Thresholded binary image.*
+![image9]
+*Figure 9 - Thresholded binary image.*
+
+
+### **3. Polynomial Fitting and Line Curvature.**
+
+![image10]
+![image11]
+![image12]
+### **5. Results.**
+![image13]
+![image14]
+![image15]
+![image16]
+
+---
+## **Authors**
+* **Juan Francisco Jurado Paez**
+* Phone: +1 513 909 4704 / +57 313 247 4186.
+* Mail: juanjuradop@gmail.com - jj@kiwicampus.com 
+* LinkedIn: https://www.linkedin.com/in/juanfjuradop/
