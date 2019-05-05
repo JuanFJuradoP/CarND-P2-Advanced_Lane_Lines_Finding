@@ -259,45 +259,10 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
 
 
 
-"""
-def save_images_output (src_path, images, image_desc, dst_path='None'):
-    # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
-    # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
-    # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
-    
-    imgs_names = os.listdir(src_path) 
-    for idx, img in enumerate(images):
-        cv2.imwrite(os.path.join(dst_path, "{}_{}".format(image_desc[idx], imgs_names[idx])), img) 
-
-"""
-
-
-"""
-def save_images_output (direction_original, image, image_description):
-    # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
-    # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
-    # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
-    image_name = []
-    image_new = []
-    image_names = os.listdir(direction_original)
-    directory_output = '/home/juan/Desktop/Self_Driving_cars_nanodegree/Projects/CarND-P2-Advanced_Lane_Lines_Finding/output_images/'
-    for i in range(len(image_names)):
-        image_name.append(directory_output + image_description + image_names[i])
-        print(image_name[i])
-        if len(image[i].shape) < 4:
-            image[i] = cv2.cvtColor(image[i], cv2.COLOR_GRAY2RGB)
-        cv2.imwrite(image_name[i], image[i])
-        #cv2.imshow("nalgas",image[i]);cv2.waitKey(0)
-        #cv2.imwrite(image[i])
-    return
-
-binary_image.dtype='uint8'
->>> cv2.imwrite('image.png', binary_image)
-"""
 
 
 def save_images_output (direction_original, image, image_description):
-    # 'direction_original' es la direccion de las imagenes originales de ahí se va a sacar el nombre,
+    # 'direction_original' es la direccion de las imagenes originales de ahi se va a sacar el nombre,
     # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
     # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
     image_name = []
@@ -631,23 +596,23 @@ def process_video (frame, mtx, dist, nx, ny):
     original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
     return original_frame_text, out_img
 
+# Read the video frame-by-frame
+cap = cv2.VideoCapture('/home/kiwicampus/JuanFJuradoP/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/project_video.mp4')
+# Define the codec and create VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi',fourcc, 20.0, (1280,720))
 
-# Uncomment to run the video pipeline.
-
-#fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
-# Read the video
-cap = cv2.VideoCapture('project_video.mp4')
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret==True:
         frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
-        #out.write(frame)
-        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('frame',frame_original_text)
+        out.write(cv2.resize(frame_original_text,(1280,720)))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    else:
+        break
 
+# Release everything if job is finished
+cap.release()
 out.release()
-cv2.waitKey(0)
-cv2.destroyAllWindows() 
+cv2.destroyAllWindows()
