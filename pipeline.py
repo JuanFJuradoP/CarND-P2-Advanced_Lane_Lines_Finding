@@ -10,7 +10,8 @@ Description:
     Self-Driving Car Nanodegree Program.
     Part 1: Computer Vision, Deep Learning and Sensor Fusion.
         Project # 2: Advanced Lane Finding Project.
-    Objective: Write a software pipeline to identify the lane boundaries in a video from a front-facing camera on a car.
+    Objective: Write a software pipeline to identify the lane boundaries in a video 
+    from a front-facing camera on a car.
 
 Tested on: 
     python 2.7.
@@ -117,11 +118,14 @@ def read_images(names):
 def camera_calibration (calibration_images_names, nx, ny):
     # Description:
     #   Function to camera calibration - camera_calibration().
-    #   Calibrate the camera according to chessboard images, returns the mtx matrix,dist and images list with points drawn.
+    #   Calibrate the camera according to chessboard images, returns the mtx matrix, 
+    #   dist and images list with points drawn.
     # Inputs: 
-    #   Calibration images list (calibration_images_names), cheesboard X corners (nx) and Y corners (ny).
+    #   Calibration images list (calibration_images_names), cheesboard X corners (nx)
+    #   and Y corners (ny).
     # Outputs: 
-    #   Camera matrix (mtx) ,distortion coefficientes (dist), images with chessboard corners (drawChessboardCornersImages).
+    #   Camera matrix (mtx) ,distortion coefficientes (dist), images with chessboard 
+    #   corners (drawChessboardCornersImages).
     # Resources:
     #   https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
 
@@ -256,10 +260,6 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
 
     # Return the binary image
     return binary_output
-
-
-
-
 
 def save_images_output (direction_original, image, image_description):
     # 'direction_original' es la direccion de las imagenes originales de ahi se va a sacar el nombre,
@@ -482,6 +482,67 @@ def print_list_text(img_src, str_list, origin = (0, 0), color = (0, 255, 255), t
 
     return img_src
 
+def process_video (frame, mtx, dist, nx, ny):
+    #Create a copy of the current frame
+    original_frame = np.copy(frame)
+
+    #Undistored image
+    frame_undistort = cv2.undistort(frame, mtx, dist, None, mtx)
+
+    #Derivate Gradx and GradY. Apply Sobel.
+    gradx = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
+    grady = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
+
+    #Apply Mag and Dir Threshold
+    mag_binary = mag_thresh(frame_undistort, sobel_kernel=3, mag_thresh=(40, 100))
+    dir_binary = dir_threshold(frame_undistort, sobel_kernel=3, thresh=(0.7, 1.3))
+
+    combined_frame = np.zeros_like(dir_binary)
+    combined_frame[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+    
+    image = cv2.cvtColor(frame_undistort, cv2.COLOR_BGR2RGB)
+    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+    s_channel = hls[:,:,2]
+    # Threshold color channel
+    s_thresh_min = 150
+    s_thresh_max = 255
+    s_binary = np.zeros_like(s_channel)
+    s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
+    # Combine the two binary thresholds
+    combined_binary = np.zeros_like(combined_frame)
+    combined_binary[(s_binary == 1) | (combined_frame == 1)] = 1
+
+    binary_warped, M = perspective_images (combined_binary, mtx, dist, nx, ny)
+
+    out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped)
+    left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+    text = []
+    text.append(str(left_curvature))
+    text.append(str(right_curvature))
+    text.append(center)
+    original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+    return original_frame_text, out_img
+
+def text_in_image (images_list,binary_warped_images):
+    new_images = []
+    for i in range(len(images_list)):
+        out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped_images[i])
+        left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+        text_list = []
+        text_list.append(str(left_curvature))
+        text_list.append(str(right_curvature))
+        text_list.append(center)
+
+        image_temp = print_list_text(images_list[i],text_list, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+        
+        new_images.append(image_temp)
+        #cv2.imshow("img",new_images[i]);cv2.waitKey(0)
+    return new_images
+
+# ===================================================================================
+# PIPELINE EJECUTION.
+# ===================================================================================
+
 # Read in and make a list of calibration images
 calibration_images_names = glob.glob('camera_cal/calibration*.jpg')
 
@@ -493,6 +554,7 @@ test_images_distored = read_images(test_images_names)
 
 ### Function to camera calibration - camera_calibration()
 mtx, dist, drawChessboardCornersImages = camera_calibration (calibration_images_names, nx, ny)
+
 ### Verify images to calibrate - check_calibration_process()
 check_calibration_process (drawChessboardCornersImages,calibration_images_names)
 
@@ -508,9 +570,7 @@ for i in range(len(calibration_images_distored)):
     image_temp = undistor_image (calibration_images_distored[i], mtx, dist)
     camera_cal_undistored.append(image_temp)
 
-#Ahora se hara el proceso para obtener una imagen binaria
-# Se realizara un for para guardar las imagenes con los filtros para deteccion de lineas
-# y se append en una nueva lista de solo imagenes binarias
+# Thresholded binary images
 binary_images = []
 
 for i in range(len(test_images_undistored)):
@@ -540,61 +600,17 @@ for i in range(len(binary_images)):
     binary_warped, M = perspective_images (binary_images[i], mtx, dist, nx, ny)
     binary_warped_images.append(binary_warped)
 
-def text_in_image (images_list,binary_warped_images):
-    new_images = []
-    for i in range(len(images_list)):
-        out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped_images[i])
-        left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-        text_list = []
-        text_list.append(str(left_curvature))
-        text_list.append(str(right_curvature))
-        text_list.append(center)
-
-        image_temp = print_list_text(images_list[i],text_list, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-        
-        new_images.append(image_temp)
-        #cv2.imshow("img",new_images[i]);cv2.waitKey(0)
-    return new_images
 
 images_with_text = text_in_image (test_images_undistored_copy,binary_warped_images)
 
-save_images_output (test_img_dir, calibration_images_distored, "Calibration_images_distored_")
-save_images_output (test_img_dir, test_images_distored, "test_images_distored_")
-save_images_output (test_img_dir, test_images_undistored, "test_images_undistored_")
-save_images_output (test_img_dir, camera_cal_undistored, "camera_cal_undistored_")
-save_images_output (test_img_dir, images_with_text, "images_with_text")
+#save_images_output (test_img_dir, calibration_images_distored, "Calibration_images_distored_")
+#save_images_output (test_img_dir, test_images_distored, "test_images_distored_")
+#save_images_output (test_img_dir, test_images_undistored, "test_images_undistored_")
+#save_images_output (test_img_dir, camera_cal_undistored, "camera_cal_undistored_")
+#save_images_output (test_img_dir, images_with_text, "images_with_text")
+
 #save_images_output (test_img_dir, binary_images, "binary_images_")
 #save_images_output (test_img_dir, binary_warped_images, "binary_warped_images_")
-
-def process_video (frame, mtx, dist, nx, ny):
-    original_frame = np.copy(frame)
-    frame_undistort = cv2.undistort(frame, mtx, dist, None, mtx)
-    gradx = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
-    grady = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
-    mag_binary = mag_thresh(frame_undistort, sobel_kernel=3, mag_thresh=(40, 100))
-    dir_binary = dir_threshold(frame_undistort, sobel_kernel=3, thresh=(0.7, 1.3))
-    combined_frame = np.zeros_like(dir_binary)
-    combined_frame[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
-    image = cv2.cvtColor(frame_undistort, cv2.COLOR_BGR2RGB)
-    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
-    s_channel = hls[:,:,2]
-    # Threshold color channel
-    s_thresh_min = 150
-    s_thresh_max = 255
-    s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
-    # Combine the two binary thresholds
-    combined_binary = np.zeros_like(combined_frame)
-    combined_binary[(s_binary == 1) | (combined_frame == 1)] = 1
-    binary_warped, M = perspective_images (combined_binary, mtx, dist, nx, ny)
-    out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped)
-    left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-    text = []
-    text.append(str(left_curvature))
-    text.append(str(right_curvature))
-    text.append(center)
-    original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-    return original_frame_text, out_img
 
 # Read the video frame-by-frame
 cap = cv2.VideoCapture('/home/kiwicampus/JuanFJuradoP/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/project_video.mp4')
@@ -602,6 +618,7 @@ cap = cv2.VideoCapture('/home/kiwicampus/JuanFJuradoP/CarND-P2-Advanced_Lane_Lin
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('output.avi',fourcc, 20.0, (1280,720))
 
+"""
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret==True:
@@ -611,6 +628,7 @@ while(cap.isOpened()):
             break
     else:
         break
+"""
 
 # Release everything if job is finished
 cap.release()
