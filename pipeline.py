@@ -98,6 +98,7 @@ test_images_names = list(map(lambda name: test_img_dir + name, test_images_names
 # FUNCTIONS.
 # ===================================================================================
 
+# OK
 def read_images(names):
     # Description:
     #   Function to read images according to name list - read_images().
@@ -115,6 +116,7 @@ def read_images(names):
         images.append(temp)
     return images
 
+# OK
 def camera_calibration (calibration_images_names, nx, ny):
     # Description:
     #   Function to camera calibration - camera_calibration().
