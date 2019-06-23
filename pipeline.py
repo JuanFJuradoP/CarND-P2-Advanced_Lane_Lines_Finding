@@ -98,7 +98,6 @@ test_images_names = list(map(lambda name: test_img_dir + name, test_images_names
 # FUNCTIONS.
 # ===================================================================================
 
-# OK
 def read_images(names):
     # Description:
     #   Function to read images according to name list - read_images().
@@ -116,7 +115,6 @@ def read_images(names):
         images.append(temp)
     return images
 
-# OK
 def camera_calibration (calibration_images_names, nx, ny):
     # Description:
     #   Function to camera calibration - camera_calibration().
@@ -263,58 +261,6 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     # Return the binary image
     return binary_output
 
-def save_images_output (direction_original, image, image_description):
-    # 'direction_original' es la direccion de las imagenes originales de ahi se va a sacar el nombre,
-    # 'image' es la lista de imagenes que se quiere guardar en la carpeta de salida y 'image_description' es el nombre de la
-    # imagen con la que se quiere guardar, ejemplo "gray", "canny", etc.
-    image_name = []
-    image_names = os.listdir(direction_original)
-    directory_output = '/home/juan/Desktop/Self_Driving_cars_nanodegree/Projects/CarND-P2-Advanced_Lane_Lines_Finding/output_images/'
-    for i in range(len(image_names)):
-        image_name.append(directory_output + image_description + image_names[i])
-        #image[i].dtype='uint32'
-        #image[i] = cv2.cvtColor(image[i], cv2.COLOR_GRAY2RGB)
-        #image[i].astype('uint8') * 255
-        #cv2.imshow("nalgas",image[i]);cv2.waitKey(0)
-        cv2.imwrite(image_name[i], image[i])
-
-        #cv2.imwrite(image[i])
-    return
-
-def radius_curvature(binary_warped, left_fit, right_fit):
-    
-    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
-    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
-    
-    # Define conversions in x and y from pixels space to meters
-    ym_per_pix = 30/720 # meters per pixel in y dimension
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
-    y_eval = np.max(ploty)
-    
-    # Fit new polynomials to x,y in world space
-    left_fit_cr = np.polyfit(ploty*ym_per_pix, left_fitx*xm_per_pix, 2)
-    right_fit_cr = np.polyfit(ploty*ym_per_pix, right_fitx*xm_per_pix, 2)
-    
-    # Calculate the new radii of curvature
-    left_curvature =  ((1 + (2*left_fit_cr[0] *y_eval*ym_per_pix + left_fit_cr[1])**2) **1.5) / np.absolute(2*left_fit_cr[0])
-    right_curvature = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
-    
-    # Calculate vehicle center
-    #left_lane and right lane bottom in pixels
-    left_lane_bottom = (left_fit[0]*y_eval)**2 + left_fit[0]*y_eval + left_fit[2]
-    right_lane_bottom = (right_fit[0]*y_eval)**2 + right_fit[0]*y_eval + right_fit[2]
-    
-    # Lane center as mid of left and right lane bottom                        
-    lane_center = (left_lane_bottom + right_lane_bottom)/2.
-    center_image = 640
-    center = (lane_center - center_image)*xm_per_pix #Convert to meters
-    position = "left" if center < 0 else "right"
-    center = "Vehicle is {:.2f}m {}".format(center, position)
-    
-    # Now our radius of curvature is in meters
-    return left_curvature, right_curvature, center
-
 def perspective_images (img, mtx, dist, nx, ny):
 
     offset = 100 # offset for dst points
@@ -424,7 +370,7 @@ def fit_polynomial(binary_warped):
     # Find our lane pixels first
     leftx, lefty, rightx, righty, out_img = find_lane_pixels(binary_warped)
 
-    # Fit a second order polynomial to each using `np.polyfit`
+    # Fit a third order polynomial to each using `np.polyfit`
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
 
@@ -436,8 +382,8 @@ def fit_polynomial(binary_warped):
     except TypeError:
         # Avoids an error if `left` and `right_fit` are still none or incorrect
         print('The function failed to fit a line!')
-        left_fitx = 1*ploty**2 + 1*ploty
-        right_fitx = 1*ploty**2 + 1*ploty
+        #left_fitx = 1*ploty**2 + 1*ploty
+        #right_fitx = 1*ploty**2 + 1*ploty
 
     ## Visualization ##
     # Colors in the left and right lane regions
@@ -445,10 +391,44 @@ def fit_polynomial(binary_warped):
     out_img[righty, rightx] = [0, 0, 255]
 
     # Plots the left and right polynomials on the lane lines
-    #plt.plot(left_fitx, ploty, color='yellow')
-    #plt.plot(right_fitx, ploty, color='yellow')
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
 
-    return out_img, left_fit, right_fit, ploty
+    return out_img, left_fit, right_fit, left_fitx, right_fitx, ploty
+
+def radius_curvature(binary_warped, left_fit, right_fit):
+    
+    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    
+    # Define conversions in x and y from pixels space to meters
+    ym_per_pix = 30/720 # meters per pixel in y dimension
+    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    y_eval = np.max(ploty)
+    
+    # Fit new polynomials to x,y in world space
+    left_fit_cr = np.polyfit(ploty*ym_per_pix, left_fitx*xm_per_pix, 2)
+    right_fit_cr = np.polyfit(ploty*ym_per_pix, right_fitx*xm_per_pix, 2)
+    
+    # Calculate the new radii of curvature
+    left_curvature =  ((1 + (2*left_fit_cr[0] *y_eval*ym_per_pix + left_fit_cr[1])**2) **1.5) / np.absolute(2*left_fit_cr[0])
+    right_curvature = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+    
+    # Calculate vehicle center
+    #left_lane and right lane bottom in pixels
+    left_lane_bottom = (left_fit[0]*y_eval)**2 + left_fit[0]*y_eval + left_fit[2]
+    right_lane_bottom = (right_fit[0]*y_eval)**2 + right_fit[0]*y_eval + right_fit[2]
+    
+    # Lane center as mid of left and right lane bottom                        
+    lane_center = (left_lane_bottom + right_lane_bottom)/2.
+    center_image = 640
+    center = (lane_center - center_image)*xm_per_pix #Convert to meters
+    position = "left" if center < 0 else "right"
+    center = "Vehicle is {:.2f}m {}".format(center, position)
+    
+    # Now our radius of curvature is in meters
+    return left_curvature, right_curvature, center
 
 def print_list_text(img_src, str_list, origin = (0, 0), color = (0, 255, 255), thickness = 2, fontScale = 0.45,  y_space = 20):
 
@@ -484,75 +464,206 @@ def print_list_text(img_src, str_list, origin = (0, 0), color = (0, 255, 255), t
 
     return img_src
 
-def process_video (frame, mtx, dist, nx, ny):
-    #Create a copy of the current frame
-    original_frame = np.copy(frame)
-
-    #Undistored image
-    frame_undistort = cv2.undistort(frame, mtx, dist, None, mtx)
-
-    #Derivate Gradx and GradY. Apply Sobel.
-    gradx = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
-    grady = abs_sobel_thresh(frame_undistort, orient='x', thresh_min=50, thresh_max=100)
-
-    #Apply Mag and Dir Threshold
-    mag_binary = mag_thresh(frame_undistort, sobel_kernel=3, mag_thresh=(40, 100))
-    dir_binary = dir_threshold(frame_undistort, sobel_kernel=3, thresh=(0.7, 1.3))
-
-    combined_frame = np.zeros_like(dir_binary)
-    combined_frame[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
-    
-    image = cv2.cvtColor(frame_undistort, cv2.COLOR_BGR2RGB)
-    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+#This function returns the binary image using hsl masks and sobel, etc. 
+def find_lane_lines(image_undistored):
+    """
+    Esta funcion se encarga de recibir una imagen en escala de grises y retorna una imagen
+    binaria usando sobel y mascara de color en hsl. Al final se combina los dos thresholds
+    """
+    gradx = abs_sobel_thresh(image_undistored, orient='x', thresh_min=50, thresh_max=100)
+    grady = abs_sobel_thresh(image_undistored, orient='x', thresh_min=50, thresh_max=100)
+    mag_binary = mag_thresh(image_undistored, sobel_kernel=3, mag_thresh=(40, 100))
+    dir_binary = dir_threshold(image_undistored, sobel_kernel=3, thresh=(0.7, 1.3))
+    combined = np.zeros_like(dir_binary)
+    combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+    imag = cv2.cvtColor(image_undistored, cv2.COLOR_BGR2RGB)
+    hls = cv2.cvtColor(imag, cv2.COLOR_RGB2HLS)
     s_channel = hls[:,:,2]
     # Threshold color channel
-    s_thresh_min = 150
+    s_thresh_min = 170
     s_thresh_max = 255
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
-    # Combine the two binary thresholds
-    combined_binary = np.zeros_like(combined_frame)
-    combined_binary[(s_binary == 1) | (combined_frame == 1)] = 1
+    # Combine both binary thresholds
+    combined_binary = np.zeros_like(combined)   
+    combined_binary[(s_binary == 1) | (combined == 1)] = 1
+    return combined_binary
 
-    binary_warped, M = perspective_images (combined_binary, mtx, dist, nx, ny)
+def fit_poly(img_shape, leftx, lefty, rightx, righty):
+     ### TO-DO: Fit a second order polynomial to each with np.polyfit() ###
+    left_fit = np.polyfit(lefty, leftx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, img_shape[0]-1, img_shape[0])
+    ### TO-DO: Calc both polynomials using ploty, left_fit and right_fit ###
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    
+    return left_fitx, right_fitx, ploty
 
-    out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped)
-    left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-    text = []
-    text.append(str(left_curvature))
-    text.append(str(right_curvature))
-    text.append(center)
-    original_frame_text = print_list_text(original_frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-    return original_frame_text, out_img
+def search_around_poly(binary_warped,image):
 
-def text_in_image (images_list,binary_warped_images):
-    new_images = []
-    for i in range(len(images_list)):
-        out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped_images[i])
-        left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-        text_list = []
-        text_list.append(str(left_curvature))
-        text_list.append(str(right_curvature))
-        text_list.append(center)
+    # Polynomial fit values from the previous frame
+    # Make sure to grab the actual values from the previous step in your project!
+    left_fit = np.array([ 2.13935315e-04, -3.77507980e-01,  4.76902175e+02])
+    right_fit = np.array([4.17622148e-04, -4.93848953e-01,  1.11806170e+03])
+    
+    # HYPERPARAMETER
+    # Choose the width of the margin around the previous polynomial to search
+    # The quiz grader expects 100 here, but feel free to tune on your own!
+    margin = 150
+    # Grab activated pixels
+    nonzero = binary_warped.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+    
+    ### TO-DO: Set the area of search based on activated x-values ###
+    ### within the +/- margin of our polynomial function ###
+    ### Hint: consider the window areas for the similarly named variables ###
+    ### in the previous quiz, but change the windows to our new search area ###
+    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + 
+                    left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + 
+                    left_fit[1]*nonzeroy + left_fit[2] + margin)))
+    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + 
+                    right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + 
+                    right_fit[1]*nonzeroy + right_fit[2] + margin)))
+    
+    # Again, extract left and right line pixel positions
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds] 
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
 
-        image_temp = print_list_text(images_list[i],text_list, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-        
-        new_images.append(image_temp)
-        #cv2.imshow("img",new_images[i]);cv2.waitKey(0)
-    return new_images
+    # Fit new polynomials
+    left_fitx, right_fitx, ploty = fit_poly(binary_warped.shape, leftx, lefty, rightx, righty)
+    
+    ## Visualization ##
+    # Create an image to draw on and an image to show the selection window
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+
+    window_img = np.zeros_like(out_img)
+
+    # Color in left and right line pixels
+    out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+    out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+
+    """
+    # Generate a polygon to illustrate the search window area
+    # And recast the x and y points into usable format for cv2.fillPoly()
+    left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
+    left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin, 
+                              ploty])))])
+    left_line_pts = np.hstack((left_line_window1, left_line_window2))
+
+
+    right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
+    right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin, 
+                              ploty])))])
+    right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
+    cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
+    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+    
+    # Plot the polynomial lines onto the image
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    ## End visualization steps ##
+    """
+    left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
+    left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin,ploty])))])
+
+    right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
+    right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin,ploty])))])
+
+    left_line_pts = np.hstack((left_line_window1, right_line_window2))
+
+    #right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+
+
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
+    #cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
+    #result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+
+    
+    
+    # Plot the polynomial lines onto the image
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    ## End visualization steps ##
+    return result, left_fitx, right_fitx, ploty, left_line_pts
+
+
+"""
+    left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
+
+    left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin,ploty])))])
+
+
+    right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
+    right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin,ploty])))])
+
+
+    left_line_pts = np.hstack((left_line_window1, right_line_window2))
+
+    #right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+
+
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
+    #cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
+    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+    
+    # Plot the polynomial lines onto the image
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    ## End visualization steps ##
+"""
+
 
 # ===================================================================================
 # PIPELINE EJECUTION.
 # ===================================================================================
 
+"""
+*************************************************************************************
+CAMERA CALIBRATION - Parameters.
+*************************************************************************************
+"""
+
 # Read in and make a list of calibration images
+# Aqui tengo la ruta de las imagenes de calibracion
 calibration_images_names = glob.glob('camera_cal/calibration*.jpg')
+
+#En calibration_images_names tengo la ruta de las imagenes de calibracion
+#Imprimir la ruta de las imagenes de calibracion
+
+#print("Calibration image root", calibration_images_names)
+
 
 ### FUNCTION: Function to read images according to name list - read_images()
 calibration_images_distored = read_images(calibration_images_names)
+# ya tengo en una lista las imagenes para calibrar la camara - calibration_images_distored
 
 ### FUNCTION: Function to read images according to name list - read_images()
 test_images_distored = read_images(test_images_names)
+
+#Ya tengo dos listas, la primer lista se llama 'calibration_images_distored' y almacena
+# todas las imagenes para calibrar la camara. Y la segunda lista se llama 'test_images_distored'
+# son las imagenes de testeo para probar todo el algoritmo.
+# de aqui en adelante se va a trabajar con esta lista 
+
+# A continuacion se va a describir todo el pipeline. Se aconseja trabajar las funciones para
+# una sola imagen y luego extrapolar a ir cambiando imagen por imagen para hacer el procesamiento
+# al fin y al cabo un video se compone de imagenes que se conoce como frames.
 
 ### Function to camera calibration - camera_calibration()
 mtx, dist, drawChessboardCornersImages = camera_calibration (calibration_images_names, nx, ny)
@@ -572,67 +683,165 @@ for i in range(len(calibration_images_distored)):
     image_temp = undistor_image (calibration_images_distored[i], mtx, dist)
     camera_cal_undistored.append(image_temp)
 
-# Thresholded binary images
-binary_images = []
+"""
+*************************************************************************************
+PROCESS PIPELINE.
+*************************************************************************************
+"""
 
-for i in range(len(test_images_undistored)):
-    gradx = abs_sobel_thresh(test_images_undistored[i], orient='x', thresh_min=50, thresh_max=100)
-    grady = abs_sobel_thresh(test_images_undistored[i], orient='x', thresh_min=50, thresh_max=100)
-    mag_binary = mag_thresh(test_images_undistored[i], sobel_kernel=3, mag_thresh=(40, 100))
-    dir_binary = dir_threshold(test_images_undistored[i], sobel_kernel=3, thresh=(0.7, 1.3))
-    combined = np.zeros_like(dir_binary)
-    combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
-    imag = cv2.cvtColor(test_images_undistored[i], cv2.COLOR_BGR2RGB)
-    hls = cv2.cvtColor(imag, cv2.COLOR_RGB2HLS)
-    s_channel = hls[:,:,2]
-    # Threshold color channel
-    s_thresh_min = 150
-    s_thresh_max = 255
-    s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
-    # Combine the two binary thresholds
-    combined_binary = np.zeros_like(combined)   
-    combined_binary[(s_binary == 1) | (combined == 1)] = 1
-    binary_images.append(combined_binary)
-    #cv2.imshow('prueba',binary_images[i])
+"""
+# Ahora se tiene en 'binary_image' la imagen binaria
+binary_image = find_lane_lines(test_images_undistored[0])
+#plt.imshow(binary_image,'gray')
+#plt.show()
 
-binary_warped_images = []
-for i in range(len(binary_images)):
+#Perspective images
+binary_warped, M = perspective_images (binary_image, mtx, dist, nx, ny)
+#plt.imshow(binary_warped,'gray')
+#plt.show()
+
+out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped)
+#plt.imshow(out_img,'gray')
+#plt.show()
+
+"""
+
+
+
+
+#Se muestra una parte en verde donde se dibuja la linea en cada imagen
+
+#result = search_around_poly(binary_warped)
+# View your output
+#plt.imshow(result,'gray')
+#plt.show()
+
+
+
+"""
+left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+text = []
+text.append(str(left_curvature))
+text.append(str(right_curvature))
+text.append(center)
+test_images_undistored_copy_warped, M = perspective_images (test_images_undistored_copy[0], mtx, dist, nx, ny)
+
+original_frame_text = print_list_text(test_images_undistored_copy_warped,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+#cv2.imshow("img",original_frame_text);cv2.waitKey(0)
+plt.imshow(original_frame_text)
+plt.show()
+
+
+"""
+
+def pipeline(frame):
+    # Check the frame is ok
+    #plt.imshow(frame)
+    #plt.show()
+    
+    frame_copy = frame.copy()
+    #plt.imshow(frame_copy)
+    #plt.show()
+
+    # Ahora se tiene en 'binary_image' la imagen binaria
+    binary_image = find_lane_lines(frame)
+    #plt.imshow(binary_image,'gray')
+    #plt.show()
+    
     #Perspective images
-    binary_warped, M = perspective_images (binary_images[i], mtx, dist, nx, ny)
-    binary_warped_images.append(binary_warped)
+    binary_warped, M = perspective_images (binary_image, mtx, dist, nx, ny)
+    #plt.imshow(binary_warped,'gray')
+    #plt.show()
+
+    frame_copy_warped, M1 = perspective_images (frame_copy, mtx, dist, nx, ny)
+    #plt.imshow(frame_copy_warped,'gray')
+    #plt.show()
+
+    #out_img, left_fit, right_fit, left_fitx, right_fitx, ploty = fit_polynomial(binary_warped)
+    
+    # Plots the left and right polynomials on the lane lines
+    #plt.plot(left_fit, ploty, color='yellow')
+    #plt.plot(right_fit, ploty, color='yellow')
+    #plt.imshow(out_img,'gray')
+    #plt.show()
+    
+    #Se muestra una parte en verde donde se dibuja la linea en cada imagen
+    result, left_fitx, right_fitx, ploty, left_line_pts = search_around_poly(binary_warped,frame_copy)
+    
+    # View your output
+    #plt.imshow(result)
+    #plt.show()
+    
+    
+    #left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
+    """
+    text = []
+    text.append(str(left_curvature))
+    text.append(str(right_curvature))
+    text.append(center)
+    test_images_undistored_copy_warped, M = perspective_images (fname_copy, mtx, dist, nx, ny)
+    
+    original_frame_text = print_list_text(frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+    """
+    #original_frame_text = print_list_text(test_images_undistored_copy_warped,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+    #cv2.imshow("img",original_frame_text);cv2.waitKey(0)
+    #plt.imshow(original_frame_text)
+    #plt.show()
 
 
-images_with_text = text_in_image (test_images_undistored_copy,binary_warped_images)
 
-#save_images_output (test_img_dir, calibration_images_distored, "Calibration_images_distored_")
-#save_images_output (test_img_dir, test_images_distored, "test_images_distored_")
-#save_images_output (test_img_dir, test_images_undistored, "test_images_undistored_")
-#save_images_output (test_img_dir, camera_cal_undistored, "camera_cal_undistored_")
-#save_images_output (test_img_dir, images_with_text, "images_with_text")
+    
+    # Create an image to draw the lines on
+    warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    """
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
 
-#save_images_output (test_img_dir, binary_images, "binary_images_")
-#save_images_output (test_img_dir, binary_warped_images, "binary_warped_images_")
+    """
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([left_line_pts]), (0,255, 0))
 
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, M, (frame_copy.shape[1], frame_copy.shape[0])) 
+    # Combine the result with the original image
+    result = cv2.addWeighted(frame_copy, 1, newwarp, 0.3, 0)
+    
+    plt.imshow(result)
+    plt.show()
+
+    return result
+
+process_image = pipeline(test_images_undistored[0])
+#plt.imshow(process_image)
+#plt.show()
+
+
+
+"""
 # Read the video frame-by-frame
-cap = cv2.VideoCapture('/home/kiwicampus/JuanFJuradoP/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/project_video.mp4')
+cap = cv2.VideoCapture('/home/juan/Documents/CarND/Projects/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/project_video.mp4')
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi',fourcc, 20.0, (1280,720))
+out = cv2.VideoWriter('Prueba1.avi',fourcc, 20.0, (1280,720))
 
-"""
 while(cap.isOpened()):
     ret, frame = cap.read()
-    if ret==True:
-        frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
-        out.write(cv2.resize(frame_original_text,(1280,720)))
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    else:
+
+    process_image = pipeline(frame)
+    #frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
+    #out.write(cv2.resize(process_image,(1280,720)))
+    cv2.imshow('frame',process_image)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-"""
 
 # Release everything if job is finished
 cap.release()
 out.release()
+"""
+
 cv2.destroyAllWindows()
+

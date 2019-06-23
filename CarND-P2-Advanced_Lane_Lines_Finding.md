@@ -111,20 +111,21 @@ plt.imshow(sxbinary, cmap='gray')
 <img src="./writeup_files/grady.png" alt="drawing" width="400"/>
 <img src="./writeup_files/mag_binary.png" alt="drawing" width="400"/>
 <img src="./writeup_files/combined_binary.png" alt="drawing" width="400"/>
+<img src="./writeup_files/binary.gif" alt="drawing" width="800"/>
+
 
 To have a more robust line detection, the magnitude of the gradient of the image is calculated using the `mag_thresh ()` function following the following pipeline. First you must obtain an image in a single channel, in this case, grayscale. Then, the gradients in 'X' and 'Y' are calculated separately using `sobelx = cv2.Sobel (gray, cv2.CV_64F, 1, 0, ksize = sobel_kernel)` and `sobely = cv2.Sobel (gray, cv2 .CV_64F, 0, 1, ksize = sobel_kernel) ` respectively.
 
 Find below some images that I obtained.
 
-<img src="./output_images/Readme_images/2.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/3.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/4.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/5.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/6.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/7.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/8.png" alt="drawing" width="400"/>
-<img src="./output_images/Readme_images/9.png" alt="drawing" width="400"/>
-
+<img src="./output_images/Readme_images/2.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/3.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/4.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/5.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/6.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/7.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/8.png" alt="drawing" width="380"/>
+<img src="./output_images/Readme_images/9.png" alt="drawing" width="380"/>
 
 ### **3. Perspective transform**
 
@@ -156,6 +157,7 @@ Note: When you apply a perspective transform, choosing four source points manual
 - Define 4 destination points (must be listed in the same order as src points!)
 - Use cv2.getPerspectiveTransform() to get M, the transform matrix
 - use cv2.warpPerspective() to apply M and warp your image to a top-down view
+<img src="./writeup_files/binary_warped.gif" alt="drawing" width="800"/>
 
 ### **3. Polynomial Fitting and Line Curvature.**
 
@@ -175,8 +177,10 @@ Plotting a histogram of where the binary activations occur across the image is o
 
 <img src="./output_images/Readme_images/10.png" alt="drawing" width="400"/>
 <img src="./output_images/Readme_images/11.png" alt="drawing" width="400"/>
-
 <img src="./writeup_files/hist.png" alt="drawing" width="800"/>
+<img src="./writeup_files/lines_warped.gif" alt="drawing" width="800"/>
+
+
 As shown in the previous animation, we can use the two highest peaks from our histogram as a starting point for determining where the lane lines are, and then use sliding windows moving upward in the image (further along the road) to determine where the lane lines go.
 
 ```
@@ -216,6 +220,9 @@ def fit_polynomial(binary_warped):
 <img src="./output_images/Readme_images/14.png" alt="drawing" width="400"/>
 <img src="./output_images/Readme_images/15.png" alt="drawing" width="400"/>
 <img src="./output_images/Readme_images/16.png" alt="drawing" width="400"/>
+
+<img src="./writeup_files/area.gif" alt="drawing" width="380"/>
+<img src="./writeup_files/safe_zone.gif" alt="drawing" width="380"/>
 
 ### **6. Discussion.**
 
