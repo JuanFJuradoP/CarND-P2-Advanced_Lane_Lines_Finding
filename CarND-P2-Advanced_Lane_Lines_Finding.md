@@ -4,7 +4,7 @@
 ## **Overview**
 One of the most important characteristics for autonomous cars is the efficient detection of lane lines on highways. Computer vision methods are used with high frequency. This project shows a line detection using computer vision algorithms robustly. (Computer Vision Fundamentals, Camera Calibration, Gradients and Color Spaces, and advanced computer vision from Udacity's Self driving car Nanodegree program).
 
-<img src="./examples/example_output.jpg" alt="drawing" width="800"/>
+<img src="./writeup_files/video.gif" alt="drawing" width="800"/>
 
 The goals / steps of this project are the following:
 
@@ -221,8 +221,10 @@ def fit_polynomial(binary_warped):
 <img src="./output_images/Readme_images/15.png" alt="drawing" width="400"/>
 <img src="./output_images/Readme_images/16.png" alt="drawing" width="400"/>
 
-<img src="./writeup_files/area.gif" alt="drawing" width="380"/>
-<img src="./writeup_files/safe_zone.gif" alt="drawing" width="380"/>
+<img src="./writeup_files/area.gif" alt="drawing" width="400"/>
+<img src="./writeup_files/safe_zone.gif" alt="drawing" width="400"/>
+
+<img src="./writeup_files/video.gif" alt="drawing" width="800"/>
 
 ### **6. Discussion.**
 

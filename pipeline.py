@@ -14,7 +14,7 @@ Description:
     from a front-facing camera on a car.
 
 Tested on: 
-    python 2.7.
+    python 3.0.
     OpenCV 3.0.0.
     Ubuntu 16.04.
 
@@ -280,10 +280,11 @@ def perspective_images (img, mtx, dist, nx, ny):
     # d) use cv2.getPerspectiveTransform() to get M, the transform matrix
     # Given src and dst points, calculate the perspective transform matrix    
     M = cv2.getPerspectiveTransform(src, dst)
+    M_inv = cv2.getPerspectiveTransform(dst, src)
     # e) use cv2.warpPerspective() to warp your image to a top-down view
     # Warp the image using OpenCV warpPerspective()
     warped = cv2.warpPerspective(img, M, img_size)
-    return warped, M
+    return warped, M, M_inv
 
 def find_lane_pixels(binary_warped):
     # Take a histogram of the bottom half of the image
@@ -599,35 +600,74 @@ def search_around_poly(binary_warped,image):
     ## End visualization steps ##
     return result, left_fitx, right_fitx, ploty, left_line_pts
 
+def fit_polynomial_jd(binary_warped, drawEnable = False):
+    # Find our lane pixels first
+    leftx, lefty, rightx, righty, out_img = find_lane_pixels(binary_warped)
 
-"""
-    left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
+    ### TO-DO: Fit a second order polynomial to each using `np.polyfit` ###
+    left_fit = np.polyfit(lefty, leftx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
 
-    left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin,ploty])))])
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+    try:
+        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    except TypeError:
+        # Avoids an error if `left` and `right_fit` are still none or incorrect
+        print('The function failed to fit a line!')
+        left_fitx = 1*ploty**2 + 1*ploty
+        right_fitx = 1*ploty**2 + 1*ploty
 
+    ## Visualization ##
+    # Colors in the left and right lane regions
+    out_img[lefty, leftx] = [255, 0, 0]
+    out_img[righty, rightx] = [0, 0, 255]
 
-    right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
-    right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin,ploty])))])
+    # Plots the left and right polynomials on the lane lines
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    
+    cv2.polylines(out_img,  np.int32(pts_left),  False,  (0, 255, 0),  thickness=5)
+    cv2.polylines(out_img,  np.int32(pts_right),  False,  (0, 255, 0),  thickness=5)
+    if(drawEnable):
+        plt.plot(left_fitx, ploty, color='yellow')
+        plt.plot(right_fitx, ploty, color='yellow')
 
+    return out_img, left_fit, right_fit, ploty
 
-    left_line_pts = np.hstack((left_line_window1, right_line_window2))
+def draw_area(M_inv, img, left_fit, right_fit, ploty, locked):
 
-    #right_line_pts = np.hstack((right_line_window1, right_line_window2))
+    undist = cv2.undistort(img, mtx, dist, None, mtx)
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    
+    # Create an image to draw the lines on
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    warp_zero = np.zeros_like(gray).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
 
-
-
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
 
     # Draw the lane onto the warped blank image
-    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
-    #cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
-    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
-    
-    # Plot the polynomial lines onto the image
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    ## End visualization steps ##
-"""
+    pts_left_line = np.vstack((left_fitx,ploty)).astype(np.int32).T
+    pts_right_line = np.vstack((right_fitx,ploty)).astype(np.int32).T
+    cv2.polylines(color_warp,  np.int32(pts_left),  False,  (255, 0, 0),  thickness=20)
+    cv2.polylines(color_warp,  np.int32(pts_right),  False,  (0, 0, 255),  thickness=20)
+    # If lane lines are locked, use green to draw, if not, use red
+    if(locked):
+        cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
+    else:
+        cv2.fillPoly(color_warp, np.int_([pts]), (0, 0, 255))
 
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, M_inv, (img.shape[1], img.shape[0])) 
+    # Combine the result with the original image
+    result = cv2.addWeighted(undist, 1, newwarp, 0.8, 0)
+    return color_warp, result
 
 # ===================================================================================
 # PIPELINE EJECUTION.
@@ -640,30 +680,13 @@ CAMERA CALIBRATION - Parameters.
 """
 
 # Read in and make a list of calibration images
-# Aqui tengo la ruta de las imagenes de calibracion
 calibration_images_names = glob.glob('camera_cal/calibration*.jpg')
-
-#En calibration_images_names tengo la ruta de las imagenes de calibracion
-#Imprimir la ruta de las imagenes de calibracion
-
-#print("Calibration image root", calibration_images_names)
-
 
 ### FUNCTION: Function to read images according to name list - read_images()
 calibration_images_distored = read_images(calibration_images_names)
-# ya tengo en una lista las imagenes para calibrar la camara - calibration_images_distored
 
 ### FUNCTION: Function to read images according to name list - read_images()
 test_images_distored = read_images(test_images_names)
-
-#Ya tengo dos listas, la primer lista se llama 'calibration_images_distored' y almacena
-# todas las imagenes para calibrar la camara. Y la segunda lista se llama 'test_images_distored'
-# son las imagenes de testeo para probar todo el algoritmo.
-# de aqui en adelante se va a trabajar con esta lista 
-
-# A continuacion se va a describir todo el pipeline. Se aconseja trabajar las funciones para
-# una sola imagen y luego extrapolar a ir cambiando imagen por imagen para hacer el procesamiento
-# al fin y al cabo un video se compone de imagenes que se conoce como frames.
 
 ### Function to camera calibration - camera_calibration()
 mtx, dist, drawChessboardCornersImages = camera_calibration (calibration_images_names, nx, ny)
@@ -689,159 +712,56 @@ PROCESS PIPELINE.
 *************************************************************************************
 """
 
-"""
-# Ahora se tiene en 'binary_image' la imagen binaria
-binary_image = find_lane_lines(test_images_undistored[0])
-#plt.imshow(binary_image,'gray')
-#plt.show()
 
-#Perspective images
-binary_warped, M = perspective_images (binary_image, mtx, dist, nx, ny)
-#plt.imshow(binary_warped,'gray')
-#plt.show()
-
-out_img, left_fit, right_fit, ploty = fit_polynomial(binary_warped)
-#plt.imshow(out_img,'gray')
-#plt.show()
-
-"""
-
-
-
-
-#Se muestra una parte en verde donde se dibuja la linea en cada imagen
-
-#result = search_around_poly(binary_warped)
-# View your output
-#plt.imshow(result,'gray')
-#plt.show()
-
-
-
-"""
-left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-text = []
-text.append(str(left_curvature))
-text.append(str(right_curvature))
-text.append(center)
-test_images_undistored_copy_warped, M = perspective_images (test_images_undistored_copy[0], mtx, dist, nx, ny)
-
-original_frame_text = print_list_text(test_images_undistored_copy_warped,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-#cv2.imshow("img",original_frame_text);cv2.waitKey(0)
-plt.imshow(original_frame_text)
-plt.show()
-
-
-"""
-
-def pipeline(frame):
-    # Check the frame is ok
-    #plt.imshow(frame)
-    #plt.show()
-    
+def process_video(frame):
     frame_copy = frame.copy()
-    #plt.imshow(frame_copy)
-    #plt.show()
-
-    # Ahora se tiene en 'binary_image' la imagen binaria
     binary_image = find_lane_lines(frame)
-    #plt.imshow(binary_image,'gray')
-    #plt.show()
-    
     #Perspective images
-    binary_warped, M = perspective_images (binary_image, mtx, dist, nx, ny)
-    #plt.imshow(binary_warped,'gray')
-    #plt.show()
+    binary_warped, M, M_inv = perspective_images (binary_image, mtx, dist, nx, ny)
+    #Fit poly
+    out, left_fit, right_fit, ploty = fit_polynomial_jd(binary_warped)
 
-    frame_copy_warped, M1 = perspective_images (frame_copy, mtx, dist, nx, ny)
-    #plt.imshow(frame_copy_warped,'gray')
-    #plt.show()
-
-    #out_img, left_fit, right_fit, left_fitx, right_fitx, ploty = fit_polynomial(binary_warped)
+    color_warped, result = draw_area(M_inv, frame, left_fit, right_fit, ploty, True)
+    #Calculate curvatura and center
+    left_curvature, right_curvature, center = radius_curvature(out, left_fit, right_fit)
     
-    # Plots the left and right polynomials on the lane lines
-    #plt.plot(left_fit, ploty, color='yellow')
-    #plt.plot(right_fit, ploty, color='yellow')
-    #plt.imshow(out_img,'gray')
-    #plt.show()
-    
-    #Se muestra una parte en verde donde se dibuja la linea en cada imagen
-    result, left_fitx, right_fitx, ploty, left_line_pts = search_around_poly(binary_warped,frame_copy)
-    
-    # View your output
-    #plt.imshow(result)
-    #plt.show()
-    
-    
-    #left_curvature, right_curvature, center = radius_curvature(out_img, left_fit, right_fit)
-    """
     text = []
     text.append(str(left_curvature))
     text.append(str(right_curvature))
     text.append(center)
-    test_images_undistored_copy_warped, M = perspective_images (fname_copy, mtx, dist, nx, ny)
-    
-    original_frame_text = print_list_text(frame,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-    """
-    #original_frame_text = print_list_text(test_images_undistored_copy_warped,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
-    #cv2.imshow("img",original_frame_text);cv2.waitKey(0)
-    #plt.imshow(original_frame_text)
+
+    image_temp = print_list_text(result,text, origin = (30, 50), color = (0, 255, 255), thickness = 2, fontScale = 1,  y_space = 40)
+
+    #plt.imshow(image_temp)
     #plt.show()
-
-
-
-    
-    # Create an image to draw the lines on
-    warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
-    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-    """
-    # Recast the x and y points into usable format for cv2.fillPoly()
-    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-    pts = np.hstack((pts_left, pts_right))
-
-    """
-    # Draw the lane onto the warped blank image
-    cv2.fillPoly(color_warp, np.int_([left_line_pts]), (0,255, 0))
-
-    # Warp the blank back to original image space using inverse perspective matrix (Minv)
-    newwarp = cv2.warpPerspective(color_warp, M, (frame_copy.shape[1], frame_copy.shape[0])) 
-    # Combine the result with the original image
-    result = cv2.addWeighted(frame_copy, 1, newwarp, 0.3, 0)
-    
-    plt.imshow(result)
-    plt.show()
 
     return result
 
-process_image = pipeline(test_images_undistored[0])
-#plt.imshow(process_image)
-#plt.show()
-
-
-
-"""
 # Read the video frame-by-frame
+
+# project_video
 cap = cv2.VideoCapture('/home/juan/Documents/CarND/Projects/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/project_video.mp4')
+# challenge_video
+#cap = cv2.VideoCapture('/home/juan/Documents/CarND/Projects/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/challenge_video.mp4')
+#harder_challenge_video
+#cap = cv2.VideoCapture('/home/juan/Documents/CarND/Projects/CarND-P2-Advanced_Lane_Lines_Finding/test_videos/harder_challenge_video.mp4')
+
+
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('Prueba1.avi',fourcc, 20.0, (1280,720))
+out = cv2.VideoWriter('project_video.avi',fourcc, 20.0, (1280,720))
 
 while(cap.isOpened()):
     ret, frame = cap.read()
 
-    process_image = pipeline(frame)
-    #frame_original_text, process_frame = process_video (frame, mtx, dist, nx, ny)
+    process_image = process_video(frame)
     #out.write(cv2.resize(process_image,(1280,720)))
     cv2.imshow('frame',process_image)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Release everything if job is finished
 cap.release()
 out.release()
-"""
-
 cv2.destroyAllWindows()
 
